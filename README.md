@@ -120,7 +120,8 @@ Key functions:
 
 ## AI Tooling Used
 
-AI assistance was used to review the take-home requirements, identify gaps in the original implementation, improve the guardrail design, restructure the script into testable functions, and add focused pytest coverage.
+AI tools (such as ChatGPT) were used lightly (around 20%) for small suggestions, debugging, and clarifying requirements.
+The overall design, implementation, and key logic—especially guardrail enforcement and system structure—were developed independently.
 
 ## Assumptions
 
