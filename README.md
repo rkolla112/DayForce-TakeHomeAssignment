@@ -1,82 +1,130 @@
-# Data Agents — NL2SQL Application
+# Data Agents NL2SQL Console App
 
-## Overview
-This project is a console-based Natural Language to SQL (NL2SQL) application that allows users to ask questions in plain English and dynamically generates SQL queries to retrieve results from a SQLite database.
-
-The system uses an LLM (Groq - Llama 3.1) to translate user queries into SQL and executes them against the provided `employees.db`.
+Console-based Natural Language to SQL application for the provided `employees.db` SQLite database. The app uses Groq-hosted Llama to translate user questions into SQL, validates the generated SQL, executes it, and prints readable tabular results.
 
 ## Features
 
-- Natural language query interface
-- Dynamic SQL generation using LLM
-- Support for joins, aggregations, and filters
-- Console-based interactive loop
-- Clean tabular output formatting
+- Interactive terminal query loop
+- Random department selection at startup
+- Mandatory department guardrail for every query
+- LLM-generated SQLite `SELECT` statements
+- Support for employees, certifications, benefits, joins, and aggregations
+- Defensive SQL validation before execution
+- Pytest coverage for guardrail, real SQLite integration, CLI startup, and optional live Groq behavior
 
-## Guardrail Enforcement (Key Requirement)
+## Guardrail Design
 
-At application startup:
-- A department is randomly selected (`Sales`, `Marketing`, or `Engineering`)
-- All queries are restricted to that department
+On startup, the app randomly selects one department from `Sales`, `Marketing`, or `Engineering` and logs it:
 
-This is enforced in:
-1. Prompt design (LLM instructed to include department filter)
-2. SQL validation layer (ensures `Department` is always present)
+```bash
+[INFO] Department selected: Marketing
+```
 
-This prevents cross-department data leakage.
+The selected department is enforced in three places:
 
-## Architecture
-User Input → LLM (Groq) → SQL Generation → Validation → SQLite Execution → Output
-### Components:
-- `generate_sql()` → Uses LLM to convert natural language into SQL
-- `validate_sql()` → Ensures only safe SELECT queries are executed
-- `run_query()` → Executes SQL against SQLite database
-- Guardrail enforcement → Ensures department filtering
+1. Prompt instructions require the generated SQL to include `Employee.Department = '<selected department>'`.
+2. `validate_sql()` rejects non-`SELECT` statements, multi-statement SQL, unsafe keywords, schema-qualified table access, missing `Employee` table usage, and missing department filters.
+3. `run_query()` creates a temporary `Employee` table containing only the selected department before executing the generated SQL. This execution-time isolation prevents cross-department rows from being returned even if the generated predicate is too broad.
 
-## Technologies Used
+## Setup
 
-- Python
-- SQLite
-- Groq API (Llama 3.1 model)
-- Tabulate (for output formatting)
-- dotenv (for API key management)
+Create and activate a virtual environment:
 
-## Setup Instructions
-
-### 1. Clone or unzip the project
-
-### 2. Create virtual environment
-
+```bash
 python3 -m venv venv
 source venv/bin/activate
+```
 
-3. Install dependencies
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
 
-4. Add API Key
-Create a .env file:
+Create a `.env` file with your Groq API key:
+
+```bash
 GROQ_API_KEY=your_api_key_here
+```
 
-Running the Application
+Optional model override:
+
+```bash
+GROQ_MODEL=llama-3.1-8b-instant
+```
+
+## Run
+
+```bash
 python app.py
+```
 
-## Example Queries
+Type `exit` or `quit` to stop the application.
 
-* Who are the software engineers?
-* Which employees have certifications?
-* What is the average salary?
-* Who has the highest remaining benefits balance?
-* List employees who started after 2023 and their certifications
+## Test
 
+```bash
+pytest -q -m "not live"
+```
+
+The non-live tests do not call the Groq API. They cover:
+
+- SQL cleanup and unsafe SQL rejection
+- Required department filtering
+- Execution-time guardrail enforcement against the real `employees.db`
+- Employee, certification, and benefits queries against the real database
+- Empty result formatting
+- `python app.py` startup, department logging, prompt display, and clean exit through a subprocess
+
+The live Groq integration test is included but skipped unless `GROQ_API_KEY` is set:
+
+```bash
+GROQ_API_KEY=your_api_key_here pytest -q -m live
+```
+
+That live test calls Groq, executes the generated SQL through the same guardrail path as the app, and verifies that other departments are not shown.
+
+To run every test, including the live Groq test when `GROQ_API_KEY` is available:
+
+```bash
+pytest -q
+```
+
+## Example Questions
+
+- Who are the software engineers?
+- Which employees have an AWS certification?
+- What is the average salary?
+- List employees who started after 2023 and their certifications.
+- Who has the highest remaining benefits balance?
+
+## Architecture
+
+```text
+User input
+  -> Groq LLM SQL generation
+  -> SQL cleanup
+  -> SQL validation
+  -> SQLite execution with filtered temporary Employee table
+  -> Tabulated console output
+```
+
+Key functions:
+
+- `app.py` is the thin executable entry point.
+- `data_agent/config.py` contains shared constants and paths.
+- `data_agent/llm.py` builds prompts, calls Groq, and cleans SQL.
+- `data_agent/sql_guard.py` applies SQL safety and guardrail checks.
+- `data_agent/database.py` executes SQL against SQLite while isolating `Employee` rows to the selected department.
+- `data_agent/console.py` handles startup, department selection, and the interactive query loop.
+
+## AI Tooling Used
+
+AI assistance was used to review the take-home requirements, identify gaps in the original implementation, improve the guardrail design, restructure the script into testable functions, and add focused pytest coverage.
 
 ## Assumptions
 
-* Only SELECT queries are allowed
-* Department filtering is mandatory
-* SQLite is used as the database
-* LLM may not always be perfect, so validation is applied
-
-## Notes
-
-* Focus was on correctness, safety, and guardrail enforcement
-* The system is designed to be simple, readable, and extensible
+- Only SQLite `SELECT` queries are allowed.
+- Generated SQL must include the `Employee` table so the selected department can be enforced consistently.
+- Evaluators will provide their own `GROQ_API_KEY` for running the app or live Groq integration test.
+- The provided `employees.db` file remains in the project root.
