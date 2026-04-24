@@ -33,8 +33,8 @@ Certification(CertificationId, EmployeeId, CertificationName, DateAchieved)
 Benefits(BenefitId, EmployeeId, BenefitsPackage, RemainingBalance)
 
 Relationships:
-Certification.EmployeeId = Employee.EmployeeId
-Benefits.EmployeeId = Employee.EmployeeId
+- Certification.EmployeeId -> Employee.EmployeeId (many-to-one; an employee may have zero or more certifications)
+- Benefits.EmployeeId -> Employee.EmployeeId (many-to-one; an employee may have zero or more benefits records)
 
 Rules:
 - Only generate SELECT queries.

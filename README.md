@@ -114,6 +114,11 @@ Key functions:
 - `data_agent/database.py` executes SQL against SQLite while isolating `Employee` rows to the selected department.
 - `data_agent/console.py` handles startup, department selection, and the interactive query loop.
 
+## Database Relationships
+
+- `Certification.EmployeeId` -> `Employee.EmployeeId` (many-to-one; an employee may have zero or more certifications)
+- `Benefits.EmployeeId` -> `Employee.EmployeeId` (many-to-one; an employee may have zero or more benefits records)
+
 ## AI Tooling Used
 
 AI tool (such as ChatGPT) was used lightly (around 20%) for small suggestions, debugging, and clarifying requirements.
