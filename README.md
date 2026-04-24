@@ -1,9 +1,7 @@
 # Data Agents NL2SQL Console App
-
 Console-based Natural Language to SQL application for the provided `employees.db` SQLite database. The app uses Groq-hosted Llama to translate user questions into SQL, validates the generated SQL, executes it, and prints readable tabular results.
 
 ## Features
-
 - Interactive terminal query loop
 - Random department selection at startup
 - Mandatory department guardrail for every query
@@ -13,7 +11,6 @@ Console-based Natural Language to SQL application for the provided `employees.db
 - Pytest coverage for guardrail, real SQLite integration, CLI startup, and optional live Groq behavior
 
 ## Guardrail Design
-
 On startup, the app randomly selects one department from `Sales`, `Marketing`, or `Engineering` and logs it:
 
 ```bash
@@ -27,7 +24,6 @@ The selected department is enforced in three places:
 3. `run_query()` creates a temporary `Employee` table containing only the selected department before executing the generated SQL. This execution-time isolation prevents cross-department rows from being returned even if the generated predicate is too broad.
 
 ## Setup
-
 Create and activate a virtual environment:
 
 ```bash
@@ -120,7 +116,7 @@ Key functions:
 
 ## AI Tooling Used
 
-AI tools (such as ChatGPT) were used lightly (around 20%) for small suggestions, debugging, and clarifying requirements.
+AI tool (such as ChatGPT) was used lightly (around 20%) for small suggestions, debugging, and clarifying requirements.
 The overall design, implementation, and key logic—especially guardrail enforcement and system structure—were developed independently.
 
 ## Assumptions
